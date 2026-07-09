@@ -1,0 +1,375 @@
+openapi: 3.0.3
+info:
+  title: ChatApp API
+  description: REST API for the WhatsApp-inspired MERN chat application.
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000/api
+    description: Local development
+  - url: https://your-app.onrender.com/api
+    description: Production (Render)
+
+tags:
+  - name: Auth
+  - name: Users
+  - name: Conversations
+  - name: Messages
+  - name: Groups
+  - name: Notifications
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        _id: { type: string }
+        name: { type: string }
+        username: { type: string }
+        email: { type: string }
+        avatar:
+          type: object
+          properties:
+            url: { type: string }
+            publicId: { type: string }
+        bio: { type: string }
+        status: { type: string }
+        isOnline: { type: boolean }
+        lastSeen: { type: string, format: date-time }
+    Message:
+      type: object
+      properties:
+        _id: { type: string }
+        conversation: { type: string }
+        sender: { $ref: '#/components/schemas/User' }
+        content: { type: string }
+        type: { type: string, enum: [text, image, video, audio, document] }
+        status: { type: string, enum: [sent, delivered, seen] }
+        reactions:
+          type: array
+          items:
+            type: object
+            properties:
+              user: { type: string }
+              emoji: { type: string }
+        createdAt: { type: string, format: date-time }
+    Conversation:
+      type: object
+      properties:
+        _id: { type: string }
+        isGroup: { type: boolean }
+        participants:
+          type: array
+          items: { $ref: '#/components/schemas/User' }
+        lastMessage: { $ref: '#/components/schemas/Message' }
+        lastActivity: { type: string, format: date-time }
+    ApiResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        message: { type: string }
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, username, email, password]
+              properties:
+                name: { type: string }
+                username: { type: string }
+                email: { type: string }
+                password: { type: string, format: password }
+      responses:
+        '201': { description: Account created }
+        '409': { description: Email or username already in use }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in with email and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+                rememberMe: { type: boolean }
+      responses:
+        '200': { description: Logged in successfully }
+        '401': { description: Invalid credentials }
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Log out the current session
+      responses:
+        '200': { description: Logged out }
+
+  /auth/refresh-token:
+    post:
+      tags: [Auth]
+      summary: Exchange a refresh token for a new access token
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken: { type: string }
+      responses:
+        '200': { description: New access token issued }
+
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Request a password reset email
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+      responses:
+        '200': { description: Reset instructions sent if the account exists }
+
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Reset password using a token
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token: { type: string }
+                password: { type: string }
+      responses:
+        '200': { description: Password reset successfully }
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get the currently authenticated user
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      user: { $ref: '#/components/schemas/User' }
+
+  /users/search:
+    get:
+      tags: [Users]
+      summary: Search users by name, username, or email
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Matching users }
+
+  /users/{userId}:
+    get:
+      tags: [Users]
+      summary: Get a user's public profile
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: User profile }
+        '404': { description: User not found }
+
+  /users/me:
+    put:
+      tags: [Users]
+      summary: Update your own profile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                username: { type: string }
+                bio: { type: string }
+                status: { type: string }
+      responses:
+        '200': { description: Profile updated }
+
+  /users/me/avatar:
+    put:
+      tags: [Users]
+      summary: Update your avatar
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                avatar: { type: string, format: binary }
+      responses:
+        '200': { description: Avatar updated }
+
+  /conversations:
+    get:
+      tags: [Conversations]
+      summary: List your conversations
+      parameters:
+        - name: filter
+          in: query
+          schema: { type: string, enum: [all, pinned, archived] }
+      responses:
+        '200': { description: List of conversations }
+    post:
+      tags: [Conversations]
+      summary: Start (or fetch existing) a 1:1 conversation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                participantId: { type: string }
+      responses:
+        '200': { description: Conversation ready }
+
+  /messages/{conversationId}:
+    get:
+      tags: [Messages]
+      summary: Get paginated messages for a conversation
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer }
+        - name: limit
+          in: query
+          schema: { type: integer }
+      responses:
+        '200': { description: Messages page }
+
+  /messages:
+    post:
+      tags: [Messages]
+      summary: Send a message (text or media)
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                conversationId: { type: string }
+                content: { type: string }
+                type: { type: string, enum: [text, image, video, audio, document] }
+                media: { type: string, format: binary }
+      responses:
+        '201': { description: Message sent }
+
+  /messages/{messageId}/react:
+    post:
+      tags: [Messages]
+      summary: Toggle a reaction on a message
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emoji: { type: string }
+      responses:
+        '200': { description: Reaction updated }
+
+  /groups:
+    post:
+      tags: [Groups]
+      summary: Create a new group
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+                memberIds:
+                  type: array
+                  items: { type: string }
+      responses:
+        '201': { description: Group created }
+
+  /groups/{groupId}/members:
+    post:
+      tags: [Groups]
+      summary: Add members to a group (admin only)
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                memberIds:
+                  type: array
+                  items: { type: string }
+      responses:
+        '200': { description: Members added }
+        '403': { description: Not an admin }
+
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: List your notifications
+      responses:
+        '200': { description: Notifications list }
+
+  /notifications/unread-count:
+    get:
+      tags: [Notifications]
+      summary: Get your unread notification count
+      responses:
+        '200': { description: Unread count }

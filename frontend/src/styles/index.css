@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    @apply font-body bg-canvas-light text-ink-light dark:bg-canvas-dark dark:text-ink-dark transition-colors duration-200;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary-200 dark:bg-primary-800 rounded-full;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  /* Visible keyboard focus everywhere, per accessibility floor */
+  :focus-visible {
+    outline: 2px solid theme('colors.primary.500');
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+@layer components {
+  .skeleton {
+    @apply animate-pulse bg-primary-100 dark:bg-primary-800/40 rounded-md;
+  }
+}
