@@ -51,10 +51,10 @@ const updateProfile = asyncHandler(async (req, res) => {
 const updateAvatar = asyncHandler(async (req, res) => {
   if (!req.file) throw new ApiError(400, 'No image file provided');
 
-  const user = await userService.updateAvatar(req.user._id, {
-    url: req.file.path,
-    publicId: req.file.filename,
-  });
+ const user = await userService.updateAvatar(req.user._id, {
+  url: `/uploads/${req.file.filename}`,
+  publicId: req.file.filename,
+});
 
   return sendSuccess(res, 200, 'Avatar updated', { user: user.toSafeObject() });
 });

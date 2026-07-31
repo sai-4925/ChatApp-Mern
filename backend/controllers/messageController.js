@@ -33,13 +33,13 @@ const sendMessage = asyncHandler(async (req, res) => {
   const { conversationId, content, type, replyTo, mentions } = req.body;
 
   const media = req.file
-    ? {
-        url: req.file.path,
-        publicId: req.file.filename,
-        fileName: req.file.originalname,
-        fileSize: req.file.size,
-      }
-    : undefined;
+  ? {
+      url: `/uploads/${req.file.filename}`,
+      publicId: req.file.filename,
+      fileName: req.file.originalname,
+      fileSize: req.file.size,
+    }
+  : undefined;
 
   const { message, conversation } = await messageService.sendMessage(req.user._id, {
     conversationId,
