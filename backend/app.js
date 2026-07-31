@@ -31,7 +31,7 @@ app.use(
 );
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: origin: process.env.CLIENT_URL ? process.env.CLIENT_URL.trim() : '*',
     credentials: true,
   })
 );
@@ -47,7 +47,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 }
-
+app.get('/', (req, res) => {
+  res.status(200).json({ success: true, message: 'Welcome to ChatApp API' });
+});
 app.use('/api', apiLimiter);
 
 // ------------------------------------------------------------------
