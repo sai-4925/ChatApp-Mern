@@ -1,29 +1,32 @@
-const cloudinary = require('../config/cloudinary');
+const fs = require('fs');
+const path = require('path');
 
 /**
- * Deletes a previously uploaded asset from Cloudinary by its public id.
- * Swallows errors (logs only) so a failed cleanup never blocks the main
- * request (e.g. updating a profile picture should succeed even if deleting
- * the old one fails).
+ * Deletes a previously uploaded file from local disk by its filename (publicId).
+ * Swallows errors so a failed cleanup never blocks the main request.
  */
-const deleteAsset = async (publicId, resourceType = 'image') => {
+const deleteAsset = async (publicId) => {
   if (!publicId) return;
 
+  const filePath = path.join(__dirname, '../uploads', publicId);
+
   try {
-    await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+    if (fs.existsSync(filePath)) {
+      await fs.promises.unlink(filePath);
+    }
   } catch (error) {
-    console.error(`Failed to delete Cloudinary asset ${publicId}: ${error.message}`);
+    console.error(`Failed to delete local asset ${publicId}: ${error.message}`);
   }
 };
 
 /**
- * Maps a message `type` to the Cloudinary resource_type used when it was
- * uploaded (see uploadMiddleware.js) so deletions target the right bucket.
+ * Kept for compatibility with existing call sites.
+ * With local storage we ignore resourceType.
  */
 const resourceTypeForMessageType = (type) => {
   if (type === 'video') return 'video';
   if (type === 'image') return 'image';
-  return 'raw'; // audio/document
+  return 'raw';
 };
 
 module.exports = { deleteAsset, resourceTypeForMessageType };

@@ -12,6 +12,9 @@ node_modules/
 dist/
 build/
 
+# Uploaded media
+backend/uploads/
+
 # Log files
 npm-debug.log*
 yarn-debug.log*

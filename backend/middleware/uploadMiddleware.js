@@ -1,23 +1,24 @@
 const multer = require('multer');
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const cloudinary = require('../config/cloudinary');
+const path = require('path');
+const fs = require('fs');
 const ApiError = require('../utils/ApiError');
 const { MAX_FILE_SIZE_MB, ALLOWED_MEDIA_MIME_TYPES } = require('../constants');
 
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: async (req, file) => {
-    const resourceType = file.mimetype.startsWith('video')
-      ? 'video'
-      : file.mimetype.startsWith('image')
-      ? 'image'
-      : 'raw'; // audio/documents
+const uploadDir = path.join(__dirname, '../uploads');
 
-    return {
-      folder: 'chatapp/media',
-      resource_type: resourceType,
-      allowed_formats: undefined, // rely on fileFilter below instead
-    };
+// ensure folder exists
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, `${uniqueSuffix}${ext}`);
   },
 });
 
