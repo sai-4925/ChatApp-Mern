@@ -1,5 +1,6 @@
 const asyncHandler = require('express-async-handler');
 const authService = require('../services/authService');
+const emailService = require('../services/emailService');
 const { sendSuccess } = require('../utils/apiResponse');
 const { getTokenCookieOptions } = require('../helpers/cookieOptions');
 
@@ -73,11 +74,13 @@ const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
   const result = await authService.createPasswordResetToken(email);
 
-  // TODO: integrate an email service (e.g. Nodemailer/SendGrid) to actually
-  // send `result.resetToken` to the user. For now we respond generically
-  // regardless of whether the account exists, to avoid leaking user data.
   if (result) {
-    console.log(`Password reset token for ${email}: ${result.resetToken}`);
+    try {
+      await emailService.sendPasswordResetEmail(email, result.resetToken);
+    } catch (error) {
+      console.error(`Failed to send password reset email to ${email}:`, error.message || error);
+      console.log(`Password reset token for ${email}: ${result.resetToken}`);
+    }
   }
 
   return sendSuccess(

@@ -197,6 +197,12 @@ cd ../frontend && npm install
 | `JWT_REMEMBER_EXPIRES_IN` | Access token lifetime with "remember me" (e.g. `30d`) |
 | `JWT_COOKIE_NAME` | Name of the httpOnly auth cookie |
 | `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | Cloudinary credentials |
+| `EMAIL_HOST` | SMTP hostname for sending password reset emails |
+| `EMAIL_PORT` | SMTP port for sending password reset emails |
+| `EMAIL_SECURE` | `true` when using a secure SMTP port (465), otherwise `false` |
+| `EMAIL_USER` | SMTP username for the email account |
+| `EMAIL_PASSWORD` | SMTP password for the email account |
+| `EMAIL_FROM` | Optional sender address for outgoing emails |
 | `CLIENT_URL` | Frontend origin, used for CORS (e.g. `http://localhost:5173`) |
 | `RATE_LIMIT_WINDOW_MS` / `RATE_LIMIT_MAX` | API rate limiting config |
 
