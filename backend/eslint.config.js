@@ -24,4 +24,16 @@ module.exports = [
       'no-console': 'off',
     },
   },
+  // Jest test files: make jest globals available so lint doesn't fail
+  {
+    files: ['tests/**/*.js', '**/*.test.js', 'tests/**/*.test.js', 'backend/tests/**/*.js'],
+    env: {
+      jest: true,
+      node: true,
+    },
+    rules: {
+      // tests often intentionally use dev-only globals
+      'no-unused-expressions': 'off',
+    },
+  },
 ];
